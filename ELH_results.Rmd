@@ -1,5 +1,10 @@
 ---
 title: "ELH_results"
+knit: (function(input_file, encoding) {
+  out_dir <- 'docs';
+  rmarkdown::render(input_file,
+ encoding=encoding,
+ output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
 author: "Evan Hersh"
 date: "07/10/2019"
 output: html_document
