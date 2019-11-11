@@ -6,30 +6,97 @@ knit: (function(input_file, encoding) {
  encoding=encoding,
  output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
 author: "Evan Hersh"
-date: "07/10/2019"
-output: html_document
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    theme: "readable"
+    highlight: "tango"
 ---
-
-```{r setup, include=FALSE}
+```{r dataprocess, include=FALSE, cache=TRUE, echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r, code = readLines("./scripts/ELH_results.R"), echo=FALSE, warning=FALSE, message=FALSE, cache=FALSE, include=FALSE}
 ```
 
-## Including Plots
+# Main results #
 
-You can also embed plots, for example:
+## Diaspore Traits ##
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+Terminal velocity was affected by all four diaspore traits, with apomicts having a wider angle of attack and longer bristles than sexuals. Here's a plot showing how terminal velocity is affected by diaspore traits by mating system.
+
+```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+grid.arrange(gg.tv.aoa,gg.tv.bl,gg.tv.nb,gg.tv.weight)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Terminal velocity was higher in sexuals than apomicts, meaning that apomicts stay afloat longer.
+
+```
+terminal.velocity ~ ms + (1|pop/mom)
+```
+
+```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+plot(tv.ggfx)
+```
+
+```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+grid.arrange(gg.box.ber.ms.all,gg.box.ber.allpops)
+```
+
+## Germination in the lab ##
+
+Apomicts had much higher germination success than sexuals.
+
+```
+germ ~ ms + (1|pop/mom) + (1|plate)
+```
+
+```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+plot(germ.ggfx)
+```
+
+```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+grid.arrange(gg.germ.box.ms, gg.germ.box.pop)
+```
+
+There were no differences between sexuals and apos in days to germination overall, but sexuals had considerably more variance and some of the sexual populations took longer to germinate than the rest.
+```
+days ~ ms + (1|pop/mom) + (1|plate)
+```
+```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+plot(days.ggfx)
+```
+
+```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+grid.arrange(gg.days.ms.box, gg.days.pop.box)
+```
+
+## Greenhouse survival ##
+
+Survival differed marginally (?) in the greenhouse between mating systems, with apo's having slightly lower survival than sexuals.
+```
+surv ~ ms + (1|pop/mom) + (1|rack)
+```
+```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+plot(gsurv.ggfx)
+```
+
+```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+grid.arrange(gg.surv.box.ms,gg.surv.box.pop)
+```
+
+## Greenhouse size ##
+
+There were no differences in leaf length or leaf number between mating systems.
+
+```
+leaf.length ~ ms + (1|pop/mom) + (1|rack)
+leaf.num ~ ms + (1|pop/mom) + (1|rack)
+```
+```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+plot(length.ggfx)
+```
+
+```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+plot(num.ggfx)
+```

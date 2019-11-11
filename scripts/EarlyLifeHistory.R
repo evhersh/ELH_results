@@ -905,7 +905,7 @@ gg.box.length.pop <- ggplot(data=H.y0.mom, aes(y=mean.length, x=pop))+
   geom_boxplot(aes(fill=ms), width=0.3, outlier.shape = NA)+
   geom_jitter(alpha=1/5, (aes(as.numeric(as.factor(pop)) + 0.3, mean.length)), width=0.1)+
   scale_fill_manual(values=c("white","darkgrey"))+
-  stat_summary(geom='text', label=length.pop.clds$.group, vjust=-6, size=5)+
+  #stat_summary(geom='text', label=length.pop.clds$.group, vjust=-6, size=5)+
   labs(x="population", y="mean leaf length (moms)")+
   theme_classic()
 
@@ -921,7 +921,7 @@ gg.box.num.pop <- ggplot(data=H.y0.mom, aes(y=mean.num, x=pop))+
   geom_boxplot(aes(fill=ms), width=0.3, outlier.shape = NA)+
   geom_jitter(alpha=1/5, (aes(as.numeric(as.factor(pop)) + 0.3, mean.num)), width=0.1)+
   scale_fill_manual(values=c("white","darkgrey"))+
-  stat_summary(geom='text', label=num.pop.clds$.group, vjust=-6, size=5)+
+  #stat_summary(geom='text', label=num.pop.clds$.group, vjust=-6, size=5)+
   labs(x="population", y="mean number of leaves (moms)")+
   theme_classic()
 
