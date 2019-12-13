@@ -8,6 +8,9 @@ library(ggpmisc)
 library(gridExtra)
 library(see)
 library(plotrix)
+library(lmtest)
+library(car)
+library(ggpubr)
 
 ############
 # Load data
@@ -269,7 +272,7 @@ Ber.dat <- Berto.dat %>%
 Ber.dat$pop <- factor(Ber.dat$pop, levels=c("B42", "B42.alt", "B46", "B49", "L12", "C59", "B52", "L16", "L40", "L41", "C21", "C43", "C54"))
 Ber.dat$region <- as.factor(Ber.dat$region)
 Ber.dat$garden <- as.factor(Ber.dat$garden)
-Ber.dat$ms <- factor(Ber.dat$ms)
+Ber.dat$ms <- factor(Ber.dat$ms, levels=c("S", "A"))
 Ber.dat$lat <- as.factor(Ber.dat$lat)
 
 Ber.dat$terminal.velocity.log <- log(Ber.dat$terminal.velocity)
@@ -333,23 +336,37 @@ L.germ.ms.glmer <- glmer(germ ~ ms + (1|pop/mom)+(1|plate), family=binomial(link
 summary(L.germ.ms.glmer)
 germ.ggfx <- ggpredict(L.germ.ms.glmer, terms = c("ms"))
 plot(germ.ggfx)
+germ.ggfx.ms.df <- as.data.frame(germ.ggfx)
 
 L.germ.ms.glmer2 <- glmer(germ ~ pop + (1|mom)+(1|plate), family=binomial(link="logit"), data=L.dat, control=glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=100000)))
 summary(L.germ.ms.glmer2)
 germ.ggfx2 <- ggpredict(L.germ.ms.glmer2, terms = c("pop"))
 plot(germ.ggfx2)
+germ.ggfx.pop.df <- as.data.frame(germ.ggfx2)
+germ.ggfx.pop.df$group <- c("1","1","1","1","1","1","2","2","2","2","2","2")
 
+lrtest(L.germ.ms.glmer,L.germ.ms.glmer2)
+
+var.test(germ ~ ms, data=L.dat, alternative = "two.sided")
+
+bartlett.test(germ ~ ms, data=L.dat)
+
+leveneTest(germ ~ ms, data=L.dat)
 # germ days
 
 L.days.ms.glmer <- glmer(days ~ ms + (1|pop/mom)+(1|plate), family=poisson(), data=L.dat.days)
 summary(L.days.ms.glmer)
-days.ggfx <- ggpredict(L.days.ms.glmer, terms = c("ms"))
+days.ggfx <- ggpredict(L.days.ms.glmer, terms = c("ms"), type="re")
+days.ggfx.randpop <- ggpredict(L.days.ms.glmer, terms = c("pop"), type="re")
 plot(days.ggfx)
+days.ggfx.ms.df <- as.data.frame(days.ggfx)
 
 L.days.pop.glmer <- glmer(days ~ pop + (1|mom)+(1|plate), family=poisson(), data=L.dat.days, control=glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=100000)))
 summary(L.days.pop.glmer)
 days.ggfx2 <- ggpredict(L.days.pop.glmer, terms = c("pop"))
 plot(days.ggfx2)
+days.ggfx.pop.df <- as.data.frame(days.ggfx2)
+days.ggfx.pop.df$group <- c("1","1","1","1","1","1","2","2","2","2","2","2")
 
 # greenhouse surv
 
@@ -357,11 +374,21 @@ L.surv.ms.glmer <- glmer(surv ~ ms + (1|pop/mom)+(1|rack), family=binomial(link=
 summary(L.surv.ms.glmer)
 gsurv.ggfx <- ggpredict(L.surv.ms.glmer, terms = c("ms"))
 plot(gsurv.ggfx)
+gsurv.ggfx.ms.df <- as.data.frame(gsurv.ggfx)
+
+L.surv.ms.glmer.2 <- glmer(surv ~ (1|pop/mom)+(1|rack), family=binomial(link="logit"), data=L.surv)
+lrtest(L.surv.ms.glmer, L.surv.ms.glmer.2)
+drop1(L.surv.ms.glmer, test="Chisq")
+anova(L.surv.ms.glmer, L.surv.ms.glmer.2)
 
 L.surv.pop.glmer <- glmer(surv ~ pop + (1|mom)+(1|rack), family=binomial(link="logit"), data=L.surv, control=glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=100000)))
 summary(L.surv.pop.glmer)
 gsurv.ggfx2 <- ggpredict(L.surv.pop.glmer, terms = c("pop"))
 plot(gsurv.ggfx2)
+gsurv.ggfx.pop.df <- as.data.frame(gsurv.ggfx2)
+gsurv.ggfx.pop.df$group <- c("1","1","1","1","1","1","2","2","2","2","2","2")
+
+lrtest(L.surv.ms.glmer, L.surv.pop.glmer)
 
 # length 
 
@@ -369,42 +396,75 @@ H.y0.length.ms.lmer <- lmer(leaf.length ~ ms + (1|pop/mom), data=H.y0)
 summary(H.y0.length.ms.lmer)
 length.ggfx <- ggpredict(H.y0.length.ms.lmer, terms="ms")
 plot(length.ggfx)
+length.ggfx.ms.df <- as.data.frame(length.ggfx)
+
+H.y0.length.pop.lmer <- lmer(leaf.length ~ pop + (1|mom), data=H.y0)
+length.pop.ggfx <- ggpredict(H.y0.length.pop.lmer, terms="pop")
+plot(length.pop.ggfx)
+length.ggfx.pop.df <- as.data.frame(length.pop.ggfx)
+length.ggfx.pop.df$group <- c("1","1","1","1","1","1","2","2","2","2","2","2")
 
 # num
 
-H.y0.num.ms.lmer <- glmer(leaf.num ~ ms + (1|pop/mom), data=H.y0, family=poisson(link="log"))
-summary(H.y0.num.ms.lmer)
-num.ggfx <- ggpredict(H.y0.num.ms.lmer, terms="ms")
+H.y0.num.ms.glmer <- glmer(leaf.num ~ ms + (1|pop/mom), data=H.y0, family=poisson(link="log"))
+summary(H.y0.num.ms.glmer)
+num.ggfx <- ggpredict(H.y0.num.ms.glmer, terms="ms")
 plot(num.ggfx)
+num.ggfx.ms.df <- as.data.frame(num.ggfx) 
+
+H.y0.num.pop.glmer <- glmer(leaf.num ~ pop + (1|mom), data=H.y0, family=poisson(link="log"), control=glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=100000)))
+num.pop.ggfx <- ggpredict(H.y0.num.pop.glmer, terms = "pop")
+plot(num.pop.ggfx)
+num.ggfx.pop.df <- as.data.frame(num.pop.ggfx)
+num.ggfx.pop.df$group <- c("1","1","1","1","1","1","2","2","2","2","2","2")
 
 # berto dat
 
 Ber.weight <- lmer(weight~ms + (1|pop/mom), data=Ber.dat)
 summary(Ber.weight)
 weight.ggfx <- ggpredict(Ber.weight, terms="ms")
-plot(weight.ggfx)
+plot(weight.ggfx) # weight does not differ between MS
 
 Ber.aot <- lmer(angle.of.attack~ms + (1|pop/mom), data=Ber.dat)
 summary(Ber.aot)
 aot.ggfx <- ggpredict(Ber.aot, terms="ms")
-plot(aot.ggfx)
+plot(aot.ggfx) # angle of attack differs significantly by ms
+ggplot(aes(ms, angle.of.attack), data=Ber.dat)+geom_jitter()
 
 Ber.bl <- lmer(bristle.length~ms + (1|pop/mom), data=Ber.dat)
 summary(Ber.bl)
 bl.ggfx <- ggpredict(Ber.bl, terms="ms")
-plot(bl.ggfx)
+plot(bl.ggfx) # very slight overlap
+ggplot(aes(ms, bristle.length), data=Ber.dat)+geom_jitter()
+
+Ber.bl2 <- lmer(bristle.length~(1|pop/mom), data=Ber.dat)
+lrtest(Ber.bl, Ber.bl2) # ms is significant by LRT
 
 Ber.nob <- lmer(number.of.bristles~ms + (1|pop/mom), data=Ber.dat)
 summary(Ber.nob)
 nob.ggfx <- ggpredict(Ber.nob, terms="ms")
-plot(nob.ggfx)
+plot(nob.ggfx) # no difference in number of bristles
 
 Ber.tv <- lmer(terminal.velocity~ms + (1|pop/mom), data=Ber.dat)
 summary(Ber.tv)
 tv.ggfx <- ggpredict(Ber.tv, terms="ms")
+tv.ggfx.ms.df <- as.data.frame(tv.ggfx)
 plot(tv.ggfx)
+ggplot(aes(ms, terminal.velocity, fill=ms), data=Ber.dat)+geom_jitter(shape=21)
+var.test(terminal.velocity ~ ms, data=Ber.dat)
 
-Ber.tv.lm.all <- lm(terminal.velocity ~ angle.of.attack + weight.log + bristle.length + number.of.bristles, data=Ber.dat)
+Ber.tv.pop <- lmer(terminal.velocity~pop+(1|mom), data=Ber.dat)
+tv.ggfx.pop <- ggpredict(Ber.tv.pop, terms="pop")
+tv.ggfx.pop.df <- as.data.frame(tv.ggfx.pop)
+tv.ggfx.pop.df$group <- c("1","1","1","1","1","2","2","2","2","2","2","2")
+
+
+Ber.pop.tv <- lmer(terminal.velocity~ pop + (1|mom), data=Ber.dat)
+tv.pop.ggfx <- ggpredict(Ber.pop.tv, terms="pop")
+plot(tv.pop.ggfx)
+
+
+Ber.tv.lm.all <- lm(terminal.velocity.log ~ angle.of.attack.log + weight.log + bristle.length.log + number.of.bristles.log, data=Ber.dat)
 summary(Ber.tv.lm.all)
 
 
@@ -414,13 +474,26 @@ summary(Ber.tv.lm.all)
 
 # germ
 
-plot(germ.ggfx)
-
-gg.germ.box.ms <- ggplot(data=L.germ.mom, aes(y=mean.germ, x=ms))+
-  geom_boxplot(aes(fill=ms), width=0.3, outlier.shape=NA)+
-  scale_fill_manual(values=c("white","darkgrey"))+
-  labs(x="mating system", y="mean germination success (moms)")+
+gg.germ.ms <-ggplot()+
+  geom_boxplot(data=L.germ.mom, aes(y=mean.germ, x=ms), alpha=0, width=0.3, outlier.shape=NA)+
+  geom_jitter(data=L.germ.mom, aes(x=ms, y=mean.germ, fill=L.germ.mom$ms), alpha=0.7, shape=21, width=0.1)+
+  geom_point(data=germ.ggfx.ms.df, aes(x=as.numeric(as.factor(x))+0.4, y=predicted, fill=x), shape=21, size=3)+
+  geom_errorbar(data=germ.ggfx.ms.df, aes(ymax=conf.high, ymin=conf.low, x=as.numeric(as.factor(x))+0.4), width=0.1)+
+  scale_fill_manual(values=c("coral3","cornflowerblue"), name="mating system", labels=c("sexual", "apomict"))+
+  labs(x="mating system", y="mean germination success")+
   theme_classic()
+
+# plot(germ.ggfx)
+# 
+# gg.germ.box.ms <- ggplot(data=L.germ.mom, aes(y=mean.germ, x=ms))+
+#   geom_boxplot(aes(fill=ms), width=0.3, outlier.shape=NA)+
+#   scale_fill_manual(values=c("white","darkgrey"))+
+#   labs(x="mating system", y="mean germination success (moms)")+
+#   theme_classic()
+
+#tiff("ELH_newplot.tiff", height=6, width=8, res=300, units="in")
+
+#dev.off()
 
 gg.germ.box.pop <- ggplot(data=L.germ.mom, aes(y=mean.germ, x=pop))+
   geom_boxplot(aes(fill=ms), width=0.3, outlier.shape = NA, position=position_dodge(4))+
@@ -430,7 +503,7 @@ gg.germ.box.pop <- ggplot(data=L.germ.mom, aes(y=mean.germ, x=pop))+
   #stat_summary(geom='text', label=L.germ.pop.clds$.group, vjust=-3, size=5)+
   theme_classic()
 
-grid.arrange(gg.germ.box.ms, gg.germ.box.pop)
+#grid.arrange(gg.germ.box.ms, gg.germ.box.pop)
 
 # days
 
@@ -451,7 +524,7 @@ gg.days.pop.box <- ggplot(data=L.days.mom, aes(y=mean.days, x=factor(pop)))+
   theme(legend.position = "none")+
   theme_classic()
 
-grid.arrange(gg.days.ms.box, gg.days.pop.box)
+#grid.arrange(gg.days.ms.box, gg.days.pop.box)
 
 # surv
 
@@ -471,7 +544,7 @@ gg.surv.box.pop <- ggplot(data=L.surv.mom, aes(y=mean.surv, x=pop))+
   ylim(.45,1)+
   theme_classic()
 
-grid.arrange(gg.surv.box.ms,gg.surv.box.pop)
+#grid.arrange(gg.surv.box.ms,gg.surv.box.pop)
 
 # tv
 
@@ -485,57 +558,59 @@ lm_eqn <- function(df){
 }
 
 
-gg.tv.weight<-ggplot(aes(y=terminal.velocity.log, x=weight.log, shape=ms, linetype=ms), data=Ber.dat)+
-  geom_point()+
-  geom_smooth(method='lm', se=FALSE)+
-  scale_shape_manual(values=c(1,16))+
-  stat_poly_eq(formula = y~x, 
-               aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
-               parse = TRUE)+
+gg.tv.weight<-ggplot(aes(y=terminal.velocity, x=weight, fill=ms), data=Ber.dat)+
+  geom_point(shape=21)+
+  geom_smooth(method='lm', se=FALSE, aes(color=ms))+
   theme_classic()+
-  labs(x="log seed mass (g)", y="log terminal velocity (cm/s)")+
-  scale_linetype_manual(values=c(2,1))
+  labs(x="seed mass (g)", y="terminal velocity (cm/s)")+
+  scale_colour_manual(values=c("coral3","cornflowerblue"), name="mating system", labels=c("sexual", "apomict"))+
+  scale_fill_manual(values=c("coral3","cornflowerblue"), name="mating system", labels=c("sexual", "apomict"))+
+  theme(legend.position = "none")
 
-gg.tv.aoa<-ggplot(aes(y=terminal.velocity.log, x=angle.of.attack.log, shape=ms, linetype=ms), data=Ber.dat)+
-  geom_point()+
-  geom_smooth(method='lm', se=FALSE)+
-  scale_shape_manual(values=c(1,16))+
-  stat_poly_eq(formula = y~x, 
-               aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
-               parse = TRUE)+
+gg.tv.aoa<-ggplot(aes(y=terminal.velocity, x=angle.of.attack, fill=ms), data=Ber.dat)+
+  geom_point(shape=21)+
+  geom_smooth(method='lm', se=FALSE, aes(color=ms))+
   theme_classic()+
-  labs(x="log angle of attack", y="log terminal velocity (cm/s)")+
-  scale_linetype_manual(values=c(2,1))
+  labs(x="angle of attack", y="terminal velocity (cm/s)")+
+  scale_colour_manual(values=c("coral3","cornflowerblue"), name="mating system", labels=c("sexual", "apomict"))+
+  scale_fill_manual(values=c("coral3","cornflowerblue"), name="mating system", labels=c("sexual", "apomict"))+
+  theme(legend.position = "none")
 
-gg.tv.bl<-ggplot(aes(y=terminal.velocity.log, x=bristle.length.log, shape=ms, linetype=ms), data=Ber.dat)+
-  geom_point()+
-  geom_smooth(method='lm', se=FALSE)+
-  scale_shape_manual(values=c(1,16))+
-  stat_poly_eq(formula = y~x, 
-               aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
-               parse = TRUE)+
+gg.tv.bl<-ggplot(aes(y=terminal.velocity, x=bristle.length, fill=ms), data=Ber.dat)+
+  geom_point(shape=21)+
+  geom_smooth(method='lm', se=FALSE, aes(color=ms))+
   theme_classic()+
-  labs(x="log bristle length (mm)", y="log terminal velocity (cm/s)")+
-  scale_linetype_manual(values=c(2,1))
+  labs(x="bristle length (mm)", y="terminal velocity (cm/s)")+
+  scale_colour_manual(values=c("coral3","cornflowerblue"), name="mating system", labels=c("sexual", "apomict"))+
+  scale_fill_manual(values=c("coral3","cornflowerblue"), name="mating system", labels=c("sexual", "apomict"))+
+  theme(legend.position = "none")
 
-gg.tv.nb<-ggplot(aes(y=terminal.velocity.log, x=number.of.bristles.log, shape=ms, linetype=ms), data=Ber.dat)+
-  geom_point()+
-  geom_smooth(method='lm', se=FALSE)+
-  scale_shape_manual(values=c(1,16))+
-  stat_poly_eq(formula = y~x, 
-               aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
-               parse = TRUE)+
+
+gg.tv.nb<-ggplot(aes(y=terminal.velocity, x=number.of.bristles, fill=ms), data=Ber.dat)+
+  geom_point(shape=21)+
+  geom_smooth(method='lm', se=FALSE, aes(color=ms))+
   theme_classic()+
-  labs(x="log number of bristles", y="log terminal velocity (cm/s)")+
-  scale_linetype_manual(values=c(2,1))
+  labs(x="number of bristles", y="terminal velocity (cm/s)")+
+  scale_colour_manual(values=c("coral3","cornflowerblue"), name="mating system", labels=c("sexual", "apomict"))+
+  scale_fill_manual(values=c("coral3","cornflowerblue"), name="mating system", labels=c("sexual", "apomict"))+
+  theme(legend.position = "bottom")
 
-grid.arrange(gg.tv.aoa,gg.tv.bl,gg.tv.nb,gg.tv.weight)
+ggarrange(gg.tv.aoa,gg.tv.bl,gg.tv.nb,gg.tv.weight, ncol=2, nrow=2, common.legend = TRUE, legend="bottom")
 
 # ms
 gg.box.ber.ms.all <- ggplot(data=Ber.dat, aes(y=terminal.velocity, x=ms))+
   geom_boxplot(aes(fill=ms), width=0.3, outlier.shape=NA)+
   scale_fill_manual(values=c("white", "darkgrey"))+
   labs(x="mating system", y="mean terminal velocity (cm/s)")+
+  theme_classic()
+
+ggplot()+
+  geom_boxplot(data=Ber.dat, aes(y=terminal.velocity, x=ms), alpha=0, width=0.3, outlier.shape=NA)+
+  geom_jitter(data=Ber.dat, aes(x=ms, y=terminal.velocity, fill=ms), alpha=0.7, shape=21, width=0.1)+
+  geom_point(data=tv.ggfx.ms.df, aes(x=as.numeric(as.factor(x))+0.4, y=predicted, fill=x), shape=21, size=3)+
+  geom_errorbar(data=tv.ggfx.ms.df, aes(ymax=conf.high, ymin=conf.low, x=as.numeric(as.factor(x))+0.4), width=0.1)+
+  scale_fill_manual(values=c("coral3","cornflowerblue"), name="mating system", labels=c("sexual", "apomict"))+
+  labs(x="mating system", y="mean terminal velocity")+
   theme_classic()
 
 # pops
@@ -546,4 +621,4 @@ gg.box.ber.allpops <- ggplot(data=Ber.dat, aes(y=terminal.velocity, x=pop))+
   labs(x="population", y="mean terminal velocity (cm/s)")+
   theme_classic()
 
-grid.arrange(gg.box.ber.ms.all,gg.box.ber.allpops)
+#grid.arrange(gg.box.ber.ms.all,gg.box.ber.allpops)

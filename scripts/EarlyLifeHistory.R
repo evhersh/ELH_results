@@ -487,7 +487,7 @@ Ber.means.ms <- Ber.dat %>%
 # Terminal velocity means
 Ber.means.TV <- Ber.dat %>%
   group_by(ms) %>%
-  summarize(mean.terminal.velocity=mean(terminal.velocity), se.terminal.velocity=std.error(terminal.velocity))
+  summarize(mean.terminal.velocity=mean(terminal.velocity), se.terminal.velocity=std.error(terminal.velocity), n())
 
 Ber.means.TV.pop <- Ber.dat %>%
   group_by(ms, pop) %>%

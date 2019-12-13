@@ -19,31 +19,34 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, code = readLines("./scripts/ELH_results.R"), echo=FALSE, warning=FALSE, message=FALSE, cache=FALSE, include=FALSE}
 ```
 
+```{r, code = readLines("./scripts/ELH_figures.R"), echo=FALSE, warning=FALSE, message=FALSE, cache=FALSE, include=FALSE}
+```
 # Main results #
 
 ## Diaspore Traits ##
 
 Terminal velocity was affected by all four diaspore traits, with apomicts having a wider angle of attack and longer bristles than sexuals. Here's a plot showing how terminal velocity is affected by diaspore traits by mating system.
 
-```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
-grid.arrange(gg.tv.aoa,gg.tv.bl,gg.tv.nb,gg.tv.weight)
+```{r, fig.height=7, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+ggarrange(gg.tv.ms, nrow=1, labels="A", ggarrange(gg.tv.aoa,gg.tv.bl,gg.tv.nb,gg.tv.weight, ncol=2, nrow=2, labels=c("B", "C", "D", "E")),common.legend = TRUE, legend="bottom")
+
 ```
 
-Terminal velocity was higher in sexuals than apomicts, meaning that apomicts stay afloat longer.
+Terminal velocity was higher in sexuals than apomicts, meaning that apomicts stay afloat longer. Here's the mixed-model (glmer) structure:
 
 ```
 terminal.velocity ~ ms + (1|pop/mom)
 ```
 
-```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
-plot(tv.ggfx)
+## Lab / Greenhouse ##
+
+```{r, fig.height=7, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+ggarrange(gg.germ.ms, nrow=1, labels="A", ggarrange(gg.days.ms,gg.gsurv.ms,gg.length.ms,gg.num.ms, ncol=2, nrow=2, labels=c("B", "C", "D", "E")),common.legend = TRUE, legend="bottom")
 ```
 
-```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
-grid.arrange(gg.box.ber.ms.all,gg.box.ber.allpops)
+```{r, fig.height=7, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+ggarrange(gg.tv.pop, gg.germ.pop, gg.days.pop, gg.gsurv.pop, gg.length.pop, gg.num.pop, common.legend = TRUE, legend="bottom", labels=c("A", "B", "C", "D", "E", "F"))
 ```
-
-## Germination in the lab ##
 
 Apomicts had much higher germination success than sexuals.
 
@@ -51,52 +54,21 @@ Apomicts had much higher germination success than sexuals.
 germ ~ ms + (1|pop/mom) + (1|plate)
 ```
 
-```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
-plot(germ.ggfx)
-```
-
-```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
-grid.arrange(gg.germ.box.ms, gg.germ.box.pop)
-```
-
 There were no differences between sexuals and apos in days to germination overall, but sexuals had considerably more variance and some of the sexual populations took longer to germinate than the rest.
+
 ```
 days ~ ms + (1|pop/mom) + (1|plate)
 ```
-```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
-plot(days.ggfx)
-```
-
-```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
-grid.arrange(gg.days.ms.box, gg.days.pop.box)
-```
-
-## Greenhouse survival ##
 
 Survival differed marginally (?) in the greenhouse between mating systems, with apo's having slightly lower survival than sexuals.
+
 ```
 surv ~ ms + (1|pop/mom) + (1|rack)
 ```
-```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
-plot(gsurv.ggfx)
-```
-
-```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
-grid.arrange(gg.surv.box.ms,gg.surv.box.pop)
-```
-
-## Greenhouse size ##
 
 There were no differences in leaf length or leaf number between mating systems.
 
 ```
 leaf.length ~ ms + (1|pop/mom) + (1|rack)
 leaf.num ~ ms + (1|pop/mom) + (1|rack)
-```
-```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
-plot(length.ggfx)
-```
-
-```{r, fig.height=6, fig.width=8, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
-plot(num.ggfx)
 ```

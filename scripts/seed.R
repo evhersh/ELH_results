@@ -5,7 +5,6 @@ library(car)
 library(ggplot2)
 library(pwr)
 library(Rmisc)
-library(plyr)
 library(visreg)
 library(multcomp)
 library(lme4)
@@ -45,7 +44,7 @@ loadfonts()
 # Load data
 ############
 
-S.dat <<-read.csv("~/GitHub/Hookeri-Gardens/Raw Data/seed_2018_Jamal.csv", stringsAsFactors = FALSE, strip.white = TRUE, na.string = c("NA",""))
+S.dat <<-read.csv("./data/seed_2018_Jamal.csv", stringsAsFactors = FALSE, strip.white = TRUE, na.string = c("NA",""))
 
 ############
 # Data prep
@@ -79,7 +78,7 @@ S.dat.mass.nat.ms <- S.dat %>%
 S.dat.mass.nat.pop <- S.dat %>%
   filter(source=="natural") %>%
   filter(!is.na(seed.mass)) %>%
-  group_by(ms,pop) %>%
+  group_by(ms, pop) %>%
   summarize(mean.mass=mean(seed.mass), se.mass=std.error(seed.mass))
 
 
