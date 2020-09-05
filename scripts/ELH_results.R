@@ -217,6 +217,11 @@ L.days1 <- L.dat %>%
   group_by(ms, pop) %>%
   summarize(mean.days=mean(days), se.days=std.error(days))
 
+qts <- quantile(L.dat$days, probs=c(0.125, 0.875), na.rm=TRUE)
+hist(L.dat$days, breaks=20)
+abline(v=qts[1],col="red")
+abline(v=qts[2],col="red")
+
 L.days.ms <- L.dat %>%
   filter(!is.na(days)) %>%
   group_by(ms) %>%
@@ -280,6 +285,13 @@ Ber.dat$weight.log <- log(Ber.dat$weight)
 Ber.dat$angle.of.attack.log <- log(Ber.dat$angle.of.attack)
 Ber.dat$bristle.length.log <- log(Ber.dat$bristle.length)
 Ber.dat$number.of.bristles.log <- log(Ber.dat$number.of.bristles)
+
+Ber.dat$terminal.velocity.scaled <- scale(Ber.dat$terminal.velocity)
+Ber.dat$weight.scaled <- scale(Ber.dat$weight)
+Ber.dat$weight.mg <- Ber.dat$weight*1000
+Ber.dat$angle.of.attack.scaled <- scale(Ber.dat$angle.of.attack)
+Ber.dat$bristle.length.scaled <- scale(Ber.dat$bristle.length)
+Ber.dat$number.of.bristles.scaled <- scale(Ber.dat$number.of.bristles)
 #Ber.dat$ms <- factor(Ber.dat$ms, levels = rev(levels(factor(Ber.dat$ms)))) #reverse order for figures (south to north)
 #Ber.dat$pop <- factor(Ber.dat$pop, levels = rev(levels(factor(Ber.dat$pop)))) #reverse order for figures (south to north)
 
@@ -337,8 +349,10 @@ summary(L.germ.ms.glmer)
 germ.ggfx <- ggpredict(L.germ.ms.glmer, terms = c("ms"))
 plot(germ.ggfx)
 germ.ggfx.ms.df <- as.data.frame(germ.ggfx)
+plot(ggemmeans(L.germ.ms.glmer, terms="ms"))
 
-L.germ.ms.glmer2 <- glmer(germ ~ pop + (1|mom)+(1|plate), family=binomial(link="logit"), data=L.dat, control=glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=100000)))
+
+L.germ.ms.glmer2 <- glmer(germ ~ (1|pop/mom)+(1|plate), family=binomial(link="logit"), data=L.dat, control=glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=100000)))
 summary(L.germ.ms.glmer2)
 germ.ggfx2 <- ggpredict(L.germ.ms.glmer2, terms = c("pop"))
 plot(germ.ggfx2)
@@ -375,6 +389,8 @@ summary(L.surv.ms.glmer)
 gsurv.ggfx <- ggpredict(L.surv.ms.glmer, terms = c("ms"))
 plot(gsurv.ggfx)
 gsurv.ggfx.ms.df <- as.data.frame(gsurv.ggfx)
+plot(ggemmeans(L.surv.ms.glmer, terms="ms"))
+
 
 L.surv.ms.glmer.2 <- glmer(surv ~ (1|pop/mom)+(1|rack), family=binomial(link="logit"), data=L.surv)
 lrtest(L.surv.ms.glmer, L.surv.ms.glmer.2)
@@ -452,6 +468,8 @@ tv.ggfx.ms.df <- as.data.frame(tv.ggfx)
 plot(tv.ggfx)
 ggplot(aes(ms, terminal.velocity, fill=ms), data=Ber.dat)+geom_jitter(shape=21)
 var.test(terminal.velocity ~ ms, data=Ber.dat)
+plot(ggemmeans(Ber.tv, terms="ms"))
+
 
 Ber.tv.pop <- lmer(terminal.velocity~pop+(1|mom), data=Ber.dat)
 tv.ggfx.pop <- ggpredict(Ber.tv.pop, terms="pop")
